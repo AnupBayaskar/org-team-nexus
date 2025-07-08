@@ -47,10 +47,11 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
   selectedOrgId, 
   onSelectOrganization 
 }) => {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible>
+    <Sidebar className={isCollapsed ? "w-14" : "w-64"} variant="sidebar">
       <SidebarTrigger className="m-2 self-end" />
       
       <SidebarContent>
@@ -68,7 +69,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
                   className="hover:bg-accent transition-colors duration-200"
                 >
                   <Users className="h-4 w-4" />
-                  {!collapsed && <span>All Organizations</span>}
+                  {!isCollapsed && <span>All Organizations</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
@@ -85,7 +86,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
                       <div className="p-1.5 bg-primary/10 rounded-md">
                         <Users className="h-3 w-3 text-primary" />
                       </div>
-                      {!collapsed && (
+                      {!isCollapsed && (
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{org.name}</p>
                           <p className="text-xs text-muted-foreground">

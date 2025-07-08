@@ -55,6 +55,22 @@ const Index = () => {
     });
   };
 
+  const handleDeleteOrganization = (orgId: string) => {
+    const orgToDelete = organizations.find(org => org.id === orgId);
+    setOrganizations(orgs => orgs.filter(org => org.id !== orgId));
+    
+    // Reset selected org if it was deleted
+    if (selectedOrgId === orgId) {
+      setSelectedOrgId(null);
+    }
+    
+    toast({
+      title: "Organization Deleted",
+      description: `${orgToDelete?.name} has been successfully deleted.`,
+      variant: "destructive",
+    });
+  };
+
   const handleAddTeam = (orgId: string, teamData: { name: string; description: string }) => {
     const newTeam: Team = {
       id: generateId(),
@@ -74,6 +90,22 @@ const Index = () => {
     toast({
       title: "Team Created",
       description: `${teamData.name} has been added to the organization.`,
+    });
+  };
+
+  const handleDeleteTeam = (orgId: string, teamId: string) => {
+    setOrganizations(orgs => 
+      orgs.map(org => 
+        org.id === orgId 
+          ? { ...org, teams: org.teams.filter(team => team.id !== teamId) }
+          : org
+      )
+    );
+    
+    toast({
+      title: "Team Deleted",
+      description: "Team has been successfully deleted.",
+      variant: "destructive",
     });
   };
 
@@ -111,12 +143,64 @@ const Index = () => {
     });
   };
 
+  const handleDeleteUser = (orgId: string, teamId: string, userId: string) => {
+    setOrganizations(orgs => 
+      orgs.map(org => 
+        org.id === orgId 
+          ? {
+              ...org,
+              teams: org.teams.map(team => 
+                team.id === teamId
+                  ? { ...team, users: team.users.filter(user => user.id !== userId) }
+                  : team
+              )
+            }
+          : org
+      )
+    );
+    
+    toast({
+      title: "User Removed",
+      description: "User has been successfully removed from the team.",
+      variant: "destructive",
+    });
+  };
+
+  const handleToggleUserAdmin = (orgId: string, teamId: string, userId: string) => {
+    setOrganizations(orgs => 
+      orgs.map(org => 
+        org.id === orgId 
+          ? {
+              ...org,
+              teams: org.teams.map(team => 
+                team.id === teamId
+                  ? { 
+                      ...team, 
+                      users: team.users.map(user => 
+                        user.id === userId
+                          ? { ...user, isAdmin: !user.isAdmin }
+                          : user
+                      ) 
+                    }
+                  : team
+              )
+            }
+          : org
+      )
+    );
+    
+    toast({
+      title: "Admin Status Updated",
+      description: "User admin status has been successfully updated.",
+    });
+  };
+
   const filteredOrganizations = selectedOrgId 
     ? organizations.filter(org => org.id === selectedOrgId)
     : organizations;
 
   return (
-    <SidebarProvider collapsedWidth={56}>
+    <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-background to-accent/20">
         <AppSidebar 
           organizations={organizations}
@@ -226,6 +310,10 @@ const Index = () => {
                         organization={org}
                         onAddTeam={handleAddTeam}
                         onAddUser={handleAddUser}
+                        onDeleteOrganization={handleDeleteOrganization}
+                        onDeleteTeam={handleDeleteTeam}
+                        onDeleteUser={handleDeleteUser}
+                        onToggleUserAdmin={handleToggleUserAdmin}
                       />
                     ))}
                   </div>

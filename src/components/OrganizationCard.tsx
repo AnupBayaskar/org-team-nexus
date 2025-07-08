@@ -4,7 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Plus, Users, User } from 'lucide-react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { ChevronDown, ChevronRight, Plus, Users, User, Trash2, Shield, ShieldOff } from 'lucide-react';
 import TeamForm from './TeamForm';
 import UserForm from './UserForm';
 
@@ -34,12 +45,20 @@ interface OrganizationCardProps {
   organization: Organization;
   onAddTeam: (orgId: string, team: { name: string; description: string }) => void;
   onAddUser: (orgId: string, teamId: string, user: { name: string; email: string; role: string; isAdmin: boolean }) => void;
+  onDeleteOrganization: (orgId: string) => void;
+  onDeleteTeam: (orgId: string, teamId: string) => void;
+  onDeleteUser: (orgId: string, teamId: string, userId: string) => void;
+  onToggleUserAdmin: (orgId: string, teamId: string, userId: string) => void;
 }
 
 const OrganizationCard: React.FC<OrganizationCardProps> = ({ 
   organization, 
   onAddTeam, 
-  onAddUser 
+  onAddUser,
+  onDeleteOrganization,
+  onDeleteTeam,
+  onDeleteUser,
+  onToggleUserAdmin
 }) => {
   const [isOrgOpen, setIsOrgOpen] = useState(true);
   const [openTeams, setOpenTeams] = useState<Set<string>>(new Set());
@@ -87,11 +106,42 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
                   </p>
                 </div>
               </div>
-              {isOrgOpen ? (
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              )}
+              <div className="flex items-center gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Organization</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete "{organization.name}"? This action cannot be undone and will remove all teams and users within this organization.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onDeleteOrganization(organization.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                {isOrgOpen ? (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
             </CardTitle>
           </CardHeader>
         </CollapsibleTrigger>
@@ -149,11 +199,42 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
                                   </p>
                                 </div>
                               </div>
-                              {openTeams.has(team.id) ? (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                              )}
+                              <div className="flex items-center gap-2">
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Team</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "{team.name}"? This action cannot be undone and will remove all users from this team.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => onDeleteTeam(organization.id, team.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                                {openTeams.has(team.id) ? (
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </div>
                             </div>
                           </CardHeader>
                         </CollapsibleTrigger>
@@ -210,6 +291,49 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
                                       </div>
                                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                                       <p className="text-xs text-primary font-medium">{user.role}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onToggleUserAdmin(organization.id, team.id, user.id)}
+                                        className="h-8 w-8 p-0 hover:bg-primary/10"
+                                        title={user.isAdmin ? "Remove admin" : "Make admin"}
+                                      >
+                                        {user.isAdmin ? (
+                                          <ShieldOff className="h-3 w-3 text-orange-600" />
+                                        ) : (
+                                          <Shield className="h-3 w-3 text-green-600" />
+                                        )}
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Remove User</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Are you sure you want to remove "{user.name}" from this team? This action cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => onDeleteUser(organization.id, team.id, user.id)}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                              Remove
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
                                     </div>
                                   </div>
                                 ))}
